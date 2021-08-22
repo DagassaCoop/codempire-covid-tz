@@ -12,10 +12,12 @@
             align-items: center;
             border-radius: 20px;
             flex-wrap: nowrap;
+            cursor: pointer;
             &-col{
                 padding: 0 30px;
                 width: 100%;
                 font-weight: bold;
+                
                 &:first-child{
                     width: 80px;
                 }
@@ -31,6 +33,16 @@
             &_title{
                 background: rgba(33, 150, 243, 1);
                 color: #fff;
+                cursor: default;
+                & li{
+                    cursor: pointer;
+                    &:first-child{
+                        cursor: default;
+                    }
+                    
+                }
+                
+                
                 .main__list-item-col_line{
                     background: rgba(255, 255, 255, 1);
                 }

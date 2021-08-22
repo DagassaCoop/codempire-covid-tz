@@ -47,37 +47,38 @@ class Main extends React.Component {
             countryTitle: 'some country',
             countryConfirmed: 0,
             countryDeaths: 0,
-            countryRecovered: 0
+            countryRecovered: 0,
+            sortStatus: false
         }
         this.getData()
         
         this.getPupUp = this.getPupUp.bind(this)
         this.updateData = this.updateData.bind(this)
+        this.sortByTotalConfirmed = this.sortByTotalConfirmed.bind(this)
+        this.sortByCountry = this.sortByCountry.bind(this)
     }
 
     getData(){
         fetch('https://api.covid19api.com/summary').then(
             (res) => res.json()
         ).then(
-            allData => {
-                this.setState({data: allData, dataCountrys: allData.Countries, dataGlobal: allData.Global})
+            allData => {this.setState({data: allData, dataCountrys: allData.Countries, dataGlobal: allData.Global})
         })
     }
-
 
     getPupUp(e){
         let targetDiv = e.target
         if(targetDiv.className === 'main__list-item'){
-            console.log(targetDiv)
+            // console.log(targetDiv)
             this.updateStatePopUp(targetDiv)
         }else{
             targetDiv = targetDiv.parentNode
             if(targetDiv.className === 'main__list-item'){
-                console.log(targetDiv)
+                // console.log(targetDiv)
                 this.updateStatePopUp(targetDiv)
             }
         }
-        console.log('start')
+        // console.log('start')
     }
 
     updateStatePopUp(targetDiv){
@@ -94,16 +95,31 @@ class Main extends React.Component {
 
     updateData = (value) => {
         this.setState({popUpStatus: value})
-        console.log('exit')
+        // console.log('exit')
     }
 
+    sortByTotalConfirmed() {
+        const newDataCountryes = this.state.dataCountrys.sort((a, b) => a.TotalConfirmed < b.TotalConfirmed ? 1 : -1)
+        this.setState({dataCountrys: newDataCountryes})
+      }
+
+    sortByCountry() {
+        const newDataCountryes = this.state.dataCountrys.sort((a,b)=>a.Country > b.Country ? 1 : -1)
+        this.setState({dataCountrys: newDataCountryes})
+    }
+
+      
+
     render(){    
+        // console.log(this.state.dataCountrys)
         return(
             <main className="main">
                 <ul className="main__list" onClick={this.getPupUp}>
-                    <ListItem title={true}/>
+                    <ListItem title={true} sortByCountry={this.sortByCountry} sortByTotalConfirmed={this.sortByTotalConfirmed}/>
                     <div className="main__list-content" id="mainListContent">
                         {this.state.dataCountrys.map((country,i) => (<ListItem key={i} index={i+1} country={country.Country} totalConfirmed={country.TotalConfirmed} totalDeaths={country.TotalDeaths} totalRecovered={country.TotalRecovered} />))}
+                        {/* {this.state.dataCountrys.map((country,i) =>(<p key={i}>{i}: {country.Country}; {country.TotalConfirmed}</p>))} */}
+                        {/* {this.state.dataCountrys.map((country,i)=> (<TestElem key={i} index={i} country={country.Country} totalConfirmed={country.TotalConfirmed}/>))} */}
                     </div>
                 </ul>
                 {this.state.popUpStatus && <PopUp updateData={this.updateData} title={this.state.countryTitle} totalConfirmed={this.state.countryConfirmed} totalDeaths={this.state.countryDeaths} totalRecovered={this.state.countryRecovered} />}
@@ -112,13 +128,45 @@ class Main extends React.Component {
     }
 }
 
+class TestElem extends React.Component{
+    constructor(props){
+        super(props)
+        // this.index = this.props.index
+        // this.country = this.props.country
+        // this.totalConfirmed = this.props.totalConfirmed
+        this.className = 'main__list-item'
+        this.index = null
+        this.country = null
+        this.totalConfirmed = null
+        if(this.props.title){
+            this.className += ' main__list-item_title'
+            this.index = '№'
+            this.country = 'Country'
+            this.totalConfirmed = 'Total Confirmed'
+        }
+    }
+
+    render(){
+        return(
+            // <p>{this.props.text}</p>
+            <ul className={this.className}>
+                <li className="main__list-item-col">{this.props.index}</li>
+                <li className="main__list-item-col_line"></li>
+                <li className="main__list-item-col" >{this.props.country ? this.props.country : '-'}</li>
+                <li className="main__list-item-col_line"></li>
+                <li className="main__list-item-col" >{this.props.totalConfirmed}</li>
+            </ul>
+        )
+    }
+}
+
 class ListItem extends React.Component {
     constructor (props){
         super(props)
         this.className = 'main__list-item'
-        this.index = this.props.index
-        this.country = this.props.country
-        this.totalConfirmed = this.props.totalConfirmed
+        this.index = null
+        this.country = null
+        this.totalConfirmed = null
         if(this.props.title){
             this.className += ' main__list-item_title'
             this.index = '№'
@@ -128,17 +176,14 @@ class ListItem extends React.Component {
 
     }
 
-   
-
     render(){
-        // console.log(this.country)
         return (
             <ul className={this.className} data-title={this.country} data-totalconfirmed={this.props.totalConfirmed} data-totaldeaths={this.props.totalDeaths} data-totalrecovered={this.props.totalRecovered}>
-                <li className="main__list-item-col">{this.index ? this.index : '-'}</li>
+                <li className="main__list-item-col">{this.index ? this.index : (this.props.index ? this.props.index : '-')}</li>
                 <li className="main__list-item-col_line"></li>
-                <li className="main__list-item-col">{this.country ? this.country : '-'}</li>
+                <li className="main__list-item-col" onClick={this.props.title && (()=>{this.props.sortByCountry()})}>{this.country ? this.country : (this.props.country ? this.props.country : '-')}</li>
                 <li className="main__list-item-col_line"></li>
-                <li className="main__list-item-col">{this.totalConfirmed ? this.totalConfirmed : '-'}</li>
+                <li className="main__list-item-col" onClick={this.props.title && (()=>{this.props.sortByTotalConfirmed()})}>{this.totalConfirmed ? this.totalConfirmed : (this.props.totalConfirmed ? this.props.totalConfirmed : '-')}</li>
             </ul>
         )
     }
@@ -185,58 +230,37 @@ class PopUpContentRow extends React.Component {
 
 
 
+render(<App />,document.getElementById('app'))
 
 
-
-
-
-
-
-
-
-class TestButton extends React.Component {
-
+class Test extends React.Component{
     constructor(props){
         super(props)
         this.state = {
-            popUpStatus: false
+            arr: [{name: "aga", index: 1},{name: "jon", index: 2}, {name: "biba", index: 3}]
+            // arr: 'Coca'
         }
-        this.getPupUp = this.getPupUp.bind(this)
-        this.updateData = this.updateData.bind(this)
-
+        this.sort = this.sort.bind(this)
     }
-    getPupUp(){
-        this.setState({popUpStatus: true})
-    }
-
-    updateData = (value) => {
-        this.setState({popUpStatus: value})
+    // dataCountrys.sort((a, b) => a.TotalConfirmed > b.TotalConfirmed ? 1 : -1)
+    sort(){
+        // const newArr = this.state.arr.sort((a,b) => a.name > b.name ? 1 : -1)
+        console.log(this.state.arr);
+        const newArr = this.state.arr.sort((a,b) => a.name > b.name ? 1 : -1)
+        this.setState({arr: newArr})
+        // this.setState({arr: "Biba"})
+        console.log(this.state.arr);
     }
 
     render(){
-        return(
-            <div className="div">
-                <button className="test-button" onClick={this.getPupUp}>Show</button>
-                {this.state.popUpStatus && <PopUp updateData={this.updateData} title="Alabama" TotalConfirmed="100" TotalDeaths="1000" TotalRecovered="10000" />}
-            </div>   
+        return (
+            <div className="box">
+                {this.state.arr.map((item,i)=>(<p key={i}>{item.index}: {item.name}</p>))}
+                {/* <p>{this.state.arr}</p> */}
+                <button onClick={this.sort}>Go</button>
+            </div>
         )
     }
 }
 
-
-
-render(<App />,document.getElementById('app'))
-// render(<TestButton />,document.getElementById('app'))
-
-
-
-
-
-
-
-
-
-
-
-
-
+// render(<Test />,document.getElementById('app'))
