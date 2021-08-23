@@ -10,17 +10,66 @@ import TotalRecovered from '@/assets/total-recovered-img.png'
 
 
 class App extends React.Component { 
+
+    constructor(props){
+        super(props)
+        this.getInput = this.getInput.bind(this)
+        this.state = {
+            data: Object,
+            dataCountrys: [],
+            inputValue: null
+        }
+
+        this.getData()
+        this.sortByTotalConfirmed = this.sortByTotalConfirmed.bind(this)
+        this.sortByCountry = this.sortByCountry.bind(this)
+    }
+
+
+    getData(){
+        fetch('https://api.covid19api.com/summary').then(
+            (res) => res.json()
+        ).then(
+            allData => {this.setState({data: allData, dataCountrys: allData.Countries, dataGlobal: allData.Global})
+        })
+    }
+
+    sortByTotalConfirmed() {
+        const newDataCountryes = this.state.dataCountrys.sort((a, b) => a.TotalConfirmed < b.TotalConfirmed ? 1 : -1)
+        this.setState({dataCountrys: newDataCountryes})
+      }
+
+    sortByCountry() {
+        const newDataCountryes = this.state.dataCountrys.sort((a,b)=>a.Country > b.Country ? 1 : -1)
+        this.setState({dataCountrys: newDataCountryes})
+    }
+
+    
+
+    getInput = (e) => {
+        const inputValue = e.target.value
+        let pattenr = new RegExp("^"+inputValue)
+        let newDataCountryes = undefined
+        inputValue 
+        ? newDataCountryes = this.state.data.Countries.filter(country => pattenr.test(country.Country))
+        : newDataCountryes = this.state.data.Countries
+        this.setState({dataCountrys: newDataCountryes})
+    }
+
     render(){
         return (
             <div className="container">
-                <Header />
-                <Main />
+                <Header getInput={this.getInput}/>
+                <Main dataCountrys={this.state.dataCountrys} sortByCountry={this.sortByCountry} sortByTotalConfirmed={this.sortByTotalConfirmed} />
             </div>
         )
     }
 }
 
 class Header extends React.Component {
+    constructor(props){
+        super(props)
+    }
     render() {
         return(
             <header className="header">
@@ -29,7 +78,7 @@ class Header extends React.Component {
                     <h1 className="header__logo-title">STATISTIC</h1>
                 </div>
                 <div className="header__search-box">
-                    <input className="header__search" type="text" placeholder="Search..." />
+                    <input onChange={this.props.getInput} className="header__search" id="headerSearch" type="text" placeholder="Search..." />
                 </div>
             </header>
         )
@@ -47,23 +96,11 @@ class Main extends React.Component {
             countryTitle: 'some country',
             countryConfirmed: 0,
             countryDeaths: 0,
-            countryRecovered: 0,
-            sortStatus: false
+            countryRecovered: 0
         }
-        this.getData()
         
         this.getPupUp = this.getPupUp.bind(this)
         this.updateData = this.updateData.bind(this)
-        this.sortByTotalConfirmed = this.sortByTotalConfirmed.bind(this)
-        this.sortByCountry = this.sortByCountry.bind(this)
-    }
-
-    getData(){
-        fetch('https://api.covid19api.com/summary').then(
-            (res) => res.json()
-        ).then(
-            allData => {this.setState({data: allData, dataCountrys: allData.Countries, dataGlobal: allData.Global})
-        })
     }
 
     getPupUp(e){
@@ -98,28 +135,13 @@ class Main extends React.Component {
         // console.log('exit')
     }
 
-    sortByTotalConfirmed() {
-        const newDataCountryes = this.state.dataCountrys.sort((a, b) => a.TotalConfirmed < b.TotalConfirmed ? 1 : -1)
-        this.setState({dataCountrys: newDataCountryes})
-      }
-
-    sortByCountry() {
-        const newDataCountryes = this.state.dataCountrys.sort((a,b)=>a.Country > b.Country ? 1 : -1)
-        this.setState({dataCountrys: newDataCountryes})
-    }
-
-      
-
     render(){    
-        // console.log(this.state.dataCountrys)
         return(
             <main className="main">
                 <ul className="main__list" onClick={this.getPupUp}>
-                    <ListItem title={true} sortByCountry={this.sortByCountry} sortByTotalConfirmed={this.sortByTotalConfirmed}/>
+                    <ListItem title={true} sortByCountry={this.props.sortByCountry} sortByTotalConfirmed={this.props.sortByTotalConfirmed}/>
                     <div className="main__list-content" id="mainListContent">
-                        {this.state.dataCountrys.map((country,i) => (<ListItem key={i} index={i+1} country={country.Country} totalConfirmed={country.TotalConfirmed} totalDeaths={country.TotalDeaths} totalRecovered={country.TotalRecovered} />))}
-                        {/* {this.state.dataCountrys.map((country,i) =>(<p key={i}>{i}: {country.Country}; {country.TotalConfirmed}</p>))} */}
-                        {/* {this.state.dataCountrys.map((country,i)=> (<TestElem key={i} index={i} country={country.Country} totalConfirmed={country.TotalConfirmed}/>))} */}
+                        {this.props.dataCountrys.map((country,i) => (<ListItem key={i} index={i+1} country={country.Country} totalConfirmed={country.TotalConfirmed} totalDeaths={country.TotalDeaths} totalRecovered={country.TotalRecovered} />))}
                     </div>
                 </ul>
                 {this.state.popUpStatus && <PopUp updateData={this.updateData} title={this.state.countryTitle} totalConfirmed={this.state.countryConfirmed} totalDeaths={this.state.countryDeaths} totalRecovered={this.state.countryRecovered} />}
@@ -178,7 +200,7 @@ class ListItem extends React.Component {
 
     render(){
         return (
-            <ul className={this.className} data-title={this.country} data-totalconfirmed={this.props.totalConfirmed} data-totaldeaths={this.props.totalDeaths} data-totalrecovered={this.props.totalRecovered}>
+            <ul className={this.className} data-title={this.props.country} data-totalconfirmed={this.props.totalConfirmed} data-totaldeaths={this.props.totalDeaths} data-totalrecovered={this.props.totalRecovered}>
                 <li className="main__list-item-col">{this.index ? this.index : (this.props.index ? this.props.index : '-')}</li>
                 <li className="main__list-item-col_line"></li>
                 <li className="main__list-item-col" onClick={this.props.title && (()=>{this.props.sortByCountry()})}>{this.country ? this.country : (this.props.country ? this.props.country : '-')}</li>
@@ -232,35 +254,3 @@ class PopUpContentRow extends React.Component {
 
 render(<App />,document.getElementById('app'))
 
-
-class Test extends React.Component{
-    constructor(props){
-        super(props)
-        this.state = {
-            arr: [{name: "aga", index: 1},{name: "jon", index: 2}, {name: "biba", index: 3}]
-            // arr: 'Coca'
-        }
-        this.sort = this.sort.bind(this)
-    }
-    // dataCountrys.sort((a, b) => a.TotalConfirmed > b.TotalConfirmed ? 1 : -1)
-    sort(){
-        // const newArr = this.state.arr.sort((a,b) => a.name > b.name ? 1 : -1)
-        console.log(this.state.arr);
-        const newArr = this.state.arr.sort((a,b) => a.name > b.name ? 1 : -1)
-        this.setState({arr: newArr})
-        // this.setState({arr: "Biba"})
-        console.log(this.state.arr);
-    }
-
-    render(){
-        return (
-            <div className="box">
-                {this.state.arr.map((item,i)=>(<p key={i}>{item.index}: {item.name}</p>))}
-                {/* <p>{this.state.arr}</p> */}
-                <button onClick={this.sort}>Go</button>
-            </div>
-        )
-    }
-}
-
-// render(<Test />,document.getElementById('app'))
